@@ -1,0 +1,25 @@
+---
+- hosts: all
+  remote_user: root
+
+  tasks:
+    - name: user
+      user: name=mysql system=yes home=/data/mysql create_home=no shell=/sbin/nologin
+    - name: unarchive
+      unarchive: src=/data/playbook/mariadb-10.2.32-linux-x86_64.tar.gz dest=/usr/local/ owner=root group=root
+    - name: mysql link
+      file: src=/usr/local/mariadb-10.2.32-linux-x86_64 dest=/usr/local/mysql state=link
+    - name: mysql datadir
+      shell: mkdir /data/mysql
+    - name: mysql datadir owner group
+      file: path=/data/mysql owner=mysql group=mysql
+    - name: mysql database
+      shell: chdir=/usr/local/mysql/ scripts/mysql_install_db --datadir=/data/mysql --user=mysql
+    - name: path var
+      copy: content='PATH=/usr/local/mysql/bin:$PATH' dest=/etc/profile.d/mysql.sh
+    - name: config
+      copy: src=/data/playbook/my-huge.cnf dest=/etc/my.cnf
+    - name: service file
+      shell: cp /usr/local/mysql/support-files/mysql.server /etc/init.d/mysqld
+    - name: start service
+      shell: service mysqld start
